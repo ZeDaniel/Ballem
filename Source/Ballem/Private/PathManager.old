@@ -1,0 +1,20 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "PathManager.h"
+
+PathManager::PathManager()
+{
+}
+
+PathManager::~PathManager()
+{
+}
+
+void PathManager::AddNewPath(USplineComponent* NewSpline, UStaticMesh* PathMesh)
+{
+	auto Path = GetWorld()->SpawnActor<APath>();
+	Path->SetSpline(NewSpline);
+
+	PathArray.Add(NewPath);
+}

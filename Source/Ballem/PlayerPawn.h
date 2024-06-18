@@ -57,4 +57,5 @@ private:
 
 	APlayerController* BallemPlayerController;
 	
+	class APathManager* BallemPathManager;
 };

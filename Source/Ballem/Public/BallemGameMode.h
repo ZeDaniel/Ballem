@@ -13,5 +13,18 @@ UCLASS()
 class BALLEM_API ABallemGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
+
+public:
+	class APathManager* GetBallemPathManager() { return BallemPathManager; }
+
+protected:
+	virtual void BeginPlay() override;
+
+private:
+
+	UPROPERTY(EditAnywhere, Category = "Paths")
+	TSubclassOf<APathManager> BallemPathManagerClass;
+
+	class APathManager* BallemPathManager;
 	
 };

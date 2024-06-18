@@ -8,6 +8,9 @@
 #include "EnhancedInputComponent.h"
 #include "Components/SplineComponent.h"
 #include "Path.h"
+#include "Kismet\GameplayStatics.h"
+#include "BallemGameMode.h"
+#include "PathManager.h"
 
 APlayerPawn::APlayerPawn()
 {
@@ -31,6 +34,8 @@ void APlayerPawn::BeginPlay()
 			Subsystem->AddMappingContext(BallemMappingContext, 0);
 		}
 	}
+
+	BallemPathManager = Cast<ABallemGameMode>(UGameplayStatics::GetGameMode(this))->GetBallemPathManager();
 }
 
 void APlayerPawn::Build(const FInputActionValue& Value)
@@ -82,10 +87,7 @@ void APlayerPawn::EndBuild(const FInputActionValue& Value)
 {
 	UE_LOG(LogTemp, Display, TEXT("Build func ended"));
 
-	auto Path = GetWorld()->SpawnActor<APath>();
-	Path->SetSpline(NewSpline);
-	
-	Path->SetOwner(this);
+	BallemPathManager->AddNewPath(NewSpline);
 
 	BuildInProgress = false;
 }

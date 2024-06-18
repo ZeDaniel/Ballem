@@ -4,32 +4,29 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Path.generated.h"
+#include "PathManager.generated.h"
 
 UCLASS()
-class BALLEM_API APath : public AActor
+class BALLEM_API APathManager : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	APath();
+	APathManager();
 
-	void SetSpline(class USplineComponent* NewSpline) { UE_LOG(LogTemp, Display, TEXT("Spline set") ); PathSpline = NewSpline; }
-
-	void SetMesh(UStaticMesh* NewSplineMesh);
-
-	void PopulatePathWithMesh();
+	void AddNewPath(class USplineComponent* NewSpline);
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	TArray<class APath*> PathArray;
+
 private:
 
-	class USplineComponent* PathSpline;
-
-	UStaticMesh* SplineMesh;
+	UPROPERTY(EditAnywhere, Category = "Paths")
+	UStaticMesh* PathMesh;
 
 public:	
 	// Called every frame
