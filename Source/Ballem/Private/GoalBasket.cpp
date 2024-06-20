@@ -5,6 +5,7 @@
 #include "Components/BoxComponent.h"
 #include "BallemGameMode.h"
 #include "Kismet/GameplayStatics.h"
+#include "Sound/SoundWave.h"
 
 // Sets default values
 AGoalBasket::AGoalBasket()
@@ -20,7 +21,6 @@ AGoalBasket::AGoalBasket()
 
 	GoalMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Goal Mesh"));
 	GoalMesh->SetupAttachment(BoxComp);
-
 }
 
 // Called when the game starts or when spawned
@@ -36,6 +36,7 @@ void AGoalBasket::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Ot
 	UE_LOG(LogTemp, Display, TEXT("Overlap begin"));
 	if (OtherActor && (OtherActor != this) && OtherActor->ActorHasTag(BallTag))
 	{
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), GoalSound, GetActorLocation());
 		if (BallCount == 0)
 		{
 			BallemGameMode->UpdateGoals(1);

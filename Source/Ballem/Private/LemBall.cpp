@@ -3,6 +3,7 @@
 
 #include "LemBall.h"
 #include "Components/SphereComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 ALemBall::ALemBall()
@@ -15,7 +16,6 @@ ALemBall::ALemBall()
 
 	LemBallMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LemBall Mesh"));
 	LemBallMesh->SetupAttachment(SphereComp);
-
 }
 
 void ALemBall::EnableBallPhysics()
@@ -42,6 +42,16 @@ void ALemBall::BeginPlay()
 
 	StartPosition = GetActorLocation();
 	StartRotation = GetActorRotation();
+
+	SphereComp->OnComponentHit.AddDynamic(this, &ALemBall::OnComponentHit);
+}
+
+void ALemBall::OnComponentHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+{
+	if (NormalImpulse.GetAbs().GetMax() > 10000000)
+	{
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), HitSound, GetActorLocation());
+	}
 }
 
 // Called every frame

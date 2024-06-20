@@ -31,6 +31,13 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	class UStaticMeshComponent* LemBallMesh;
 
+	UPROPERTY(EditAnywhere)
+	class USoundWave* HitSound;
+
+	UFUNCTION()
+	void OnComponentHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+
+
 private:
 
 	FVector StartPosition;
