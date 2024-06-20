@@ -42,6 +42,8 @@ protected:
 
 	void BeginPlay() override;
 
+	void FindBalls();
+
 	void Build(const FInputActionValue& Value);
 
 	void StartBuild();

@@ -49,6 +49,8 @@ void APath::PopulatePathWithMesh()
 			//Move static mesh into correct place
 			NewSplineMeshComponent->SetupAttachment(PathSpline);
 			NewSplineMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			NewSplineMeshComponent->SetSimulatePhysics(true);
+			NewSplineMeshComponent->SetCollisionProfileName(UCollisionProfile::BlockAllDynamic_ProfileName);
 			NewSplineMeshComponent->SetForwardAxis(ESplineMeshAxis::X);
 			NewSplineMeshComponent->SetStaticMesh(SplineMesh);
 

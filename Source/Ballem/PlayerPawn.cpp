@@ -38,6 +38,13 @@ void APlayerPawn::BeginPlay()
 
 	BallemPathManager = Cast<ABallemGameMode>(UGameplayStatics::GetGameMode(this))->GetBallemPathManager();
 
+	FTimerHandle StartTimer;
+	FTimerDelegate StartTimerDelegate = FTimerDelegate::CreateUObject(this, &APlayerPawn::FindBalls);
+	GetWorldTimerManager().SetTimer(StartTimer, StartTimerDelegate, 0.5f, false);
+}
+
+void APlayerPawn::FindBalls()
+{
 	TArray<AActor*> BallsToFind;
 
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ALemBall::StaticClass(), BallsToFind);
