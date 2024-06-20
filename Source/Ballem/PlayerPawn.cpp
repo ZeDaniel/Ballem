@@ -11,6 +11,7 @@
 #include "Kismet\GameplayStatics.h"
 #include "BallemGameMode.h"
 #include "PathManager.h"
+#include "LemBall.h"
 
 APlayerPawn::APlayerPawn()
 {
@@ -36,6 +37,16 @@ void APlayerPawn::BeginPlay()
 	}
 
 	BallemPathManager = Cast<ABallemGameMode>(UGameplayStatics::GetGameMode(this))->GetBallemPathManager();
+
+	TArray<AActor*> BallsToFind;
+
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ALemBall::StaticClass(), BallsToFind);
+
+	for (AActor* Actor : BallsToFind)
+	{
+		ALemBall* Ball = Cast<ALemBall>(Actor);
+		LemBallArray.Add(Ball);
+	}
 }
 
 void APlayerPawn::Build(const FInputActionValue& Value)
@@ -57,7 +68,7 @@ void APlayerPawn::StartBuild()
 		FHitResult HitResult;
 		BallemPlayerController->GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, false, HitResult);
 
-		DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 50, 12, FColor::Red, false, 10.f);
+		DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 50, 12, FColor::Red, false, 1000.f);
 
 		BuildInProgress = true;
 
@@ -76,7 +87,7 @@ void APlayerPawn::ContinueBuild()
 		FHitResult HitResult;
 		BallemPlayerController->GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, false, HitResult);
 
-		DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 50, 12, FColor::Red, false, 10.f);
+		DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 50, 12, FColor::Red, false, 1000.f);
 		NewSpline->AddSplinePoint(HitResult.ImpactPoint, ESplineCoordinateSpace::World, true);
 
 		UE_LOG(LogTemp, Display, TEXT("Build func continued"));
@@ -87,9 +98,33 @@ void APlayerPawn::EndBuild(const FInputActionValue& Value)
 {
 	UE_LOG(LogTemp, Display, TEXT("Build func ended"));
 
+	FlushPersistentDebugLines(GetWorld());
+
 	BallemPathManager->AddNewPath(NewSpline);
 
 	BuildInProgress = false;
+}
+
+void APlayerPawn::StartSimulation(const FInputActionValue& Value)
+{
+	for (ALemBall* Ball : LemBallArray)
+	{
+		Ball->EnableBallPhysics();
+	}
+}
+
+void APlayerPawn::UndoPath(const FInputActionValue& Value)
+{
+	BallemPathManager->RemoveLastPath();
+}
+
+void APlayerPawn::Reset(const FInputActionValue& Value)
+{
+	for (ALemBall* Ball : LemBallArray)
+	{
+		Ball->DisableBallPhysics();
+		Ball->ResetPosition();
+	}
 }
 
 void APlayerPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -100,6 +135,9 @@ void APlayerPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	{
 		EnhancedInputComponent->BindAction(BuildAction, ETriggerEvent::Triggered, this, &APlayerPawn::Build);
 		EnhancedInputComponent->BindAction(EndBuildAction, ETriggerEvent::Triggered, this, &APlayerPawn::EndBuild);
+		EnhancedInputComponent->BindAction(StartSimulateAction, ETriggerEvent::Triggered, this, &APlayerPawn::StartSimulation);
+		EnhancedInputComponent->BindAction(UndoAction, ETriggerEvent::Triggered, this, &APlayerPawn::UndoPath);
+		EnhancedInputComponent->BindAction(ResetAction, ETriggerEvent::Triggered, this, &APlayerPawn::Reset);
 	}
 }
 
@@ -107,14 +145,6 @@ void APlayerPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 void APlayerPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	if (BallemPlayerController)
-	{
-		/*FHitResult HitResult;
-		BallemPlayerController->GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, false, HitResult);
-
-		DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 50, 12, FColor::Red, false, 3.f);*/
-	}
 }
 
 

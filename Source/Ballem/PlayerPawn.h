@@ -31,6 +31,15 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	class UInputAction* EndBuildAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	class UInputAction* StartSimulateAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	class UInputAction* UndoAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	class UInputAction* ResetAction;
+
 	void BeginPlay() override;
 
 	void Build(const FInputActionValue& Value);
@@ -40,6 +49,12 @@ protected:
 	void ContinueBuild();
 
 	void EndBuild(const FInputActionValue& Value);
+
+	void StartSimulation(const FInputActionValue& Value);
+
+	void UndoPath(const FInputActionValue& Value);
+
+	void Reset(const FInputActionValue& Value);
 
 	void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
@@ -58,4 +73,6 @@ private:
 	APlayerController* BallemPlayerController;
 	
 	class APathManager* BallemPathManager;
+
+	TArray<class ALemBall*> LemBallArray;
 };

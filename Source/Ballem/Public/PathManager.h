@@ -17,6 +17,8 @@ public:
 
 	void AddNewPath(class USplineComponent* NewSpline);
 
+	void RemoveLastPath();
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

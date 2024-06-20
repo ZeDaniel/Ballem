@@ -21,6 +21,8 @@ public:
 
 	void PopulatePathWithMesh();
 
+	void DestroyPath();
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

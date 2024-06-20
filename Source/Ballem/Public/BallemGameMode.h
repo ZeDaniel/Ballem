@@ -17,13 +17,26 @@ class BALLEM_API ABallemGameMode : public AGameModeBase
 public:
 	class APathManager* GetBallemPathManager() { return BallemPathManager; }
 
+	void UpdateGoals(int AddValue);
+
 protected:
 	virtual void BeginPlay() override;
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void WinGame();
+
 private:
 
+	int GoalsToWin = 0;
+
+	int GoalsCompleted = 0;
+
 	UPROPERTY(EditAnywhere, Category = "Paths")
-	TSubclassOf<APathManager> BallemPathManagerClass;
+	TSubclassOf<class APathManager> BallemPathManagerClass;
+
+	void CalculateGoalsToWin();
+
+	void CheckForWin();
 
 	class APathManager* BallemPathManager;
 	

@@ -34,7 +34,7 @@ void APath::PopulatePathWithMesh()
 	FBox MeshBox = SplineMesh->GetBoundingBox();
 	float XLength = (MeshBox.Min.GetAbs() + MeshBox.Max.GetAbs()).X;
 
-	for (int i = 0; i < PathSpline->GetSplineLength() / XLength; i++)
+	for (int i = 0; i < trunc(PathSpline->GetSplineLength()) / XLength; i++)
 	{
 		//attempt to create new spline mesh component
 		USplineMeshComponent* NewSplineMeshComponent = NewObject<USplineMeshComponent>(this, USplineMeshComponent::StaticClass());
@@ -59,8 +59,19 @@ void APath::PopulatePathWithMesh()
 
 			NewSplineMeshComponent->SetStartAndEnd(StartPos, StartTan, EndPos, EndTan);
 		}
-		
 	}
+}
+
+void APath::DestroyPath()
+{
+	TArray<AActor*> AttachedActors;
+	GetAttachedActors(AttachedActors);
+	for(AActor* Actor : AttachedActors)
+	{
+		if(Actor)
+			Actor->Destroy();
+	}
+	Destroy();
 }
 
 // Called when the game starts or when spawned

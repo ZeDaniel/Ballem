@@ -44,3 +44,12 @@ void APathManager::AddNewPath(USplineComponent* NewSpline)
 	NewPath->FinishSpawning(PathTransform);
 }
 
+void APathManager::RemoveLastPath()
+{
+	if (!PathArray.IsEmpty() && PathArray.Last())
+	{
+		PathArray.Last()->DestroyPath();
+		PathArray.Pop(EAllowShrinking::Yes);
+	}
+}
+
