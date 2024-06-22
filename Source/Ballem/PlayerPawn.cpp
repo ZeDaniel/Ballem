@@ -79,7 +79,7 @@ void APlayerPawn::StartBuild()
 
 		BuildInProgress = true;
 
-		NewSpline = NewObject<USplineComponent>();
+		NewSpline = NewObject<USplineComponent>(this, USplineComponent::StaticClass());
 		NewSpline->ClearSplinePoints();
 		NewSpline->AddSplinePoint(HitResult.ImpactPoint, ESplineCoordinateSpace::World, true);
 
@@ -95,6 +95,7 @@ void APlayerPawn::ContinueBuild()
 		BallemPlayerController->GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, false, HitResult);
 
 		DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 50, 12, FColor::Red, false, 1000.f);
+
 		NewSpline->AddSplinePoint(HitResult.ImpactPoint, ESplineCoordinateSpace::World, true);
 
 		UE_LOG(LogTemp, Display, TEXT("Build func continued"));
