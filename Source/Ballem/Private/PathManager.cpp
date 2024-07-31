@@ -39,6 +39,8 @@ void APathManager::AddNewPath(USplineComponent* NewSpline)
 
 	NewPath->PopulatePathWithMesh();
 
+	NewPath->Tags.Add(TEXT("SplinePath"));
+
 	PathArray.Add(NewPath);
 
 	NewPath->FinishSpawning(PathTransform);

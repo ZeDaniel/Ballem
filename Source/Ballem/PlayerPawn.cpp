@@ -75,15 +75,18 @@ void APlayerPawn::StartBuild()
 		FHitResult HitResult;
 		BallemPlayerController->GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, false, HitResult);
 
-		DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 50, 12, FColor::Red, false, 1000.f);
+		if (!(HitResult.GetActor()->ActorHasTag(TEXT("SplinePath"))))
+		{
+			DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 50, 12, FColor::Red, false, 1000.f);
 
-		BuildInProgress = true;
+			BuildInProgress = true;
 
-		NewSpline = NewObject<USplineComponent>(this, USplineComponent::StaticClass());
-		NewSpline->ClearSplinePoints();
-		NewSpline->AddSplinePoint(HitResult.ImpactPoint, ESplineCoordinateSpace::World, true);
+			NewSpline = NewObject<USplineComponent>(this, USplineComponent::StaticClass());
+			NewSpline->ClearSplinePoints();
+			NewSpline->AddSplinePoint(HitResult.ImpactPoint, ESplineCoordinateSpace::World, true);
 
-		UE_LOG(LogTemp, Display, TEXT("Build func started"));
+			UE_LOG(LogTemp, Display, TEXT("Build func started"));
+		}
 	}	
 }
 
@@ -94,11 +97,17 @@ void APlayerPawn::ContinueBuild()
 		FHitResult HitResult;
 		BallemPlayerController->GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, false, HitResult);
 
-		DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 50, 12, FColor::Red, false, 1000.f);
+		
 
-		NewSpline->AddSplinePoint(HitResult.ImpactPoint, ESplineCoordinateSpace::World, true);
+		//Check validity of impact point. Is it far enough? Is it hitting a path?
+		FSplinePoint LastPoint =  NewSpline->GetSplinePointAt(NewSpline->GetNumberOfSplinePoints() - 1, ESplineCoordinateSpace::World);
+		if ((HitResult.ImpactPoint - LastPoint.Position).Length() > MinSplinePointDistance && !(HitResult.GetActor()->ActorHasTag(TEXT("SplinePath"))))
+		{
+			DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 50, 12, FColor::Red, false, 1000.f);
+			NewSpline->AddSplinePoint(HitResult.ImpactPoint, ESplineCoordinateSpace::World, true);
 
-		UE_LOG(LogTemp, Display, TEXT("Build func continued"));
+			UE_LOG(LogTemp, Display, TEXT("Build func continued"));
+		}	
 	}
 }
 
@@ -135,6 +144,26 @@ void APlayerPawn::Reset(const FInputActionValue& Value)
 	}
 }
 
+void APlayerPawn::MoveCursor(const FInputActionValue& Value)
+{
+	FVector2D CursorAxisVector = Value.Get<FVector2D>();
+
+
+	if (BallemPlayerController)
+	{
+		double NewMouseX;
+		double NewMouseY;
+		BallemPlayerController->GetMousePosition(NewMouseX, NewMouseY);
+
+		UE_LOG(LogTemp, Display, TEXT("Controller input: X:%f, Y:%f"), CursorAxisVector.X, CursorAxisVector.Y);
+
+		NewMouseX += CursorAxisVector.X * UGameplayStatics::GetWorldDeltaSeconds(GetWorld());
+		NewMouseY += CursorAxisVector.Y * UGameplayStatics::GetWorldDeltaSeconds(GetWorld());
+
+		BallemPlayerController->SetMouseLocation(round(NewMouseX), round(NewMouseY));
+	}
+}
+
 void APlayerPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
@@ -146,6 +175,7 @@ void APlayerPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 		EnhancedInputComponent->BindAction(StartSimulateAction, ETriggerEvent::Triggered, this, &APlayerPawn::StartSimulation);
 		EnhancedInputComponent->BindAction(UndoAction, ETriggerEvent::Triggered, this, &APlayerPawn::UndoPath);
 		EnhancedInputComponent->BindAction(ResetAction, ETriggerEvent::Triggered, this, &APlayerPawn::Reset);
+		EnhancedInputComponent->BindAction(MoveCursorAction, ETriggerEvent::Triggered, this, &APlayerPawn::MoveCursor);
 	}
 }
 

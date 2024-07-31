@@ -40,6 +40,13 @@ void APath::PopulatePathWithMesh()
 		USplineMeshComponent* NewSplineMeshComponent = NewObject<USplineMeshComponent>(this, USplineMeshComponent::StaticClass());
 		if (NewSplineMeshComponent)
 		{
+			//Get direction at spline and rotate to prevent mesh twists
+			//FVector SplineDirection = PathSpline->GetWorldDirectionAtDistanceAlongSpline(i * XLength);
+			FVector SplineDirection = PathSpline->GetWorldDirectionAtDistanceAlongSpline(i * XLength);
+			FVector NewSplineDirection = SplineDirection.RotateAngleAxis(-90, FVector(0, 1, 0));
+			NewSplineMeshComponent->SetSplineUpDir(NewSplineDirection);
+
+
 			//attach and add component
 			NewSplineMeshComponent->RegisterComponent();
 			NewSplineMeshComponent->SetMobility(EComponentMobility::Movable);
@@ -54,10 +61,15 @@ void APath::PopulatePathWithMesh()
 			NewSplineMeshComponent->SetForwardAxis(ESplineMeshAxis::X);
 			NewSplineMeshComponent->SetStaticMesh(SplineMesh);
 
-			FVector StartPos = PathSpline->GetLocationAtDistanceAlongSpline(i * XLength, ESplineCoordinateSpace::Local);
+			/*FVector StartPos = PathSpline->GetLocationAtDistanceAlongSpline(i * XLength, ESplineCoordinateSpace::Local);
 			FVector StartTan = PathSpline->GetTangentAtDistanceAlongSpline(i * XLength, ESplineCoordinateSpace::Local).GetClampedToSize(0.f, XLength);
 			FVector EndPos = PathSpline->GetLocationAtDistanceAlongSpline((i + 1) * XLength, ESplineCoordinateSpace::Local);
-			FVector EndTan = PathSpline->GetTangentAtDistanceAlongSpline((i + 1) * XLength, ESplineCoordinateSpace::Local).GetClampedToSize(0.f, XLength);
+			FVector EndTan = PathSpline->GetTangentAtDistanceAlongSpline((i + 1) * XLength, ESplineCoordinateSpace::Local).GetClampedToSize(0.f, XLength);*/
+
+			FVector StartPos = PathSpline->GetWorldLocationAtDistanceAlongSpline(i * XLength);
+			FVector StartTan = PathSpline->GetWorldDirectionAtDistanceAlongSpline(i * XLength).GetClampedToSize(0.f, XLength);;
+			FVector EndPos = PathSpline->GetWorldLocationAtDistanceAlongSpline((i + 1) * XLength);
+			FVector EndTan = PathSpline->GetWorldDirectionAtDistanceAlongSpline((i + 1) * XLength).GetClampedToSize(0.f, XLength);
 
 			NewSplineMeshComponent->SetStartAndEnd(StartPos, StartTan, EndPos, EndTan);
 		}

@@ -40,6 +40,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	class UInputAction* ResetAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	class UInputAction* MoveCursorAction;
+
+	UPROPERTY(EditAnywhere, Category = "Build")
+	float MinSplinePointDistance = 50.f;
+
 	void BeginPlay() override;
 
 	void FindBalls();
@@ -57,6 +63,8 @@ protected:
 	void UndoPath(const FInputActionValue& Value);
 
 	void Reset(const FInputActionValue& Value);
+
+	void MoveCursor(const FInputActionValue& Value);
 
 	void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
