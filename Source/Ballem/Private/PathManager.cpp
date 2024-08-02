@@ -55,3 +55,11 @@ void APathManager::RemoveLastPath()
 	}
 }
 
+void APathManager::RemovePath(APath* PathToRemove)
+{
+	int32 index = PathArray.Find(PathToRemove);
+
+	PathArray[index]->DestroyPath();
+	PathArray.RemoveAtSwap(index);
+}
+

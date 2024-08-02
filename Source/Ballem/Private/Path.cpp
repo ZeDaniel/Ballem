@@ -61,19 +61,44 @@ void APath::PopulatePathWithMesh()
 			NewSplineMeshComponent->SetForwardAxis(ESplineMeshAxis::X);
 			NewSplineMeshComponent->SetStaticMesh(SplineMesh);
 
-			/*FVector StartPos = PathSpline->GetLocationAtDistanceAlongSpline(i * XLength, ESplineCoordinateSpace::Local);
-			FVector StartTan = PathSpline->GetTangentAtDistanceAlongSpline(i * XLength, ESplineCoordinateSpace::Local).GetClampedToSize(0.f, XLength);
-			FVector EndPos = PathSpline->GetLocationAtDistanceAlongSpline((i + 1) * XLength, ESplineCoordinateSpace::Local);
-			FVector EndTan = PathSpline->GetTangentAtDistanceAlongSpline((i + 1) * XLength, ESplineCoordinateSpace::Local).GetClampedToSize(0.f, XLength);*/
 
 			FVector StartPos = PathSpline->GetWorldLocationAtDistanceAlongSpline(i * XLength);
-			FVector StartTan = PathSpline->GetWorldDirectionAtDistanceAlongSpline(i * XLength).GetClampedToSize(0.f, XLength);;
+			//FVector StartTan = PathSpline->GetWorldDirectionAtDistanceAlongSpline(i * XLength).GetClampedToSize(0.f, XLength);
+			FVector StartTan = PathSpline->GetWorldTangentAtDistanceAlongSpline(i * XLength).GetClampedToSize(0.f, XLength);
 			FVector EndPos = PathSpline->GetWorldLocationAtDistanceAlongSpline((i + 1) * XLength);
-			FVector EndTan = PathSpline->GetWorldDirectionAtDistanceAlongSpline((i + 1) * XLength).GetClampedToSize(0.f, XLength);
+			//FVector EndTan = PathSpline->GetWorldDirectionAtDistanceAlongSpline((i + 1) * XLength).GetClampedToSize(0.f, XLength);
+			FVector EndTan = PathSpline->GetWorldTangentAtDistanceAlongSpline((i + 1) * XLength).GetClampedToSize(0.f, XLength);
 
 			NewSplineMeshComponent->SetStartAndEnd(StartPos, StartTan, EndPos, EndTan);
 		}
 	}
+}
+
+void APath::ToggleHighlight()
+{
+	UE_LOG(LogTemp, Display, TEXT("Toggle Highlight called"));
+
+	TArray<USceneComponent*> SplineComponents;
+
+	PathSpline->GetChildrenComponents(false, SplineComponents);
+
+	for (USceneComponent* ChildComponent : SplineComponents)
+	{
+		//Attempt to cast comopnent to spline mesh. set custom render pass if able
+		if (USplineMeshComponent* ChildSplineMesh = Cast<USplineMeshComponent>(ChildComponent))
+		{
+			if (IsHighlighted)
+			{
+				ChildSplineMesh->SetRenderCustomDepth(false);
+			}
+			else
+			{
+				ChildSplineMesh->SetRenderCustomDepth(true);
+			}
+		}
+	}
+
+	IsHighlighted = !IsHighlighted;
 }
 
 void APath::DestroyPath()

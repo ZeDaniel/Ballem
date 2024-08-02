@@ -33,7 +33,6 @@ void AGoalBasket::BeginPlay()
 
 void AGoalBasket::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	UE_LOG(LogTemp, Display, TEXT("Overlap begin"));
 	if (OtherActor && (OtherActor != this) && OtherActor->ActorHasTag(BallTag))
 	{
 		UGameplayStatics::PlaySoundAtLocation(GetWorld(), GoalSound, GetActorLocation());
@@ -48,13 +47,16 @@ void AGoalBasket::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Ot
 //TODO: Figure out if one ball leaves but another doesn't? Unlikely but technically this is wrong right now
 void AGoalBasket::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	UE_LOG(LogTemp, Display, TEXT("Overlap end"));
+
 	if (OtherActor && (OtherActor != this) && OtherActor->ActorHasTag(BallTag))
 	{
-		if(BallCount == 1)
-		BallemGameMode->UpdateGoals(-1);
+		if (BallCount == 1)
+		{
+			BallemGameMode->UpdateGoals(-1);
+		}
+		BallCount--;
 	}
-	BallCount--;
+	
 }
 
 // Called every frame

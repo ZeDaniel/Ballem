@@ -21,6 +21,8 @@ public:
 
 	void PopulatePathWithMesh();
 
+	void ToggleHighlight();
+
 	void DestroyPath();
 
 protected:
@@ -32,6 +34,8 @@ private:
 	class USplineComponent* PathSpline;
 
 	UStaticMesh* SplineMesh;
+
+	bool IsHighlighted = false;
 
 public:	
 	// Called every frame

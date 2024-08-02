@@ -36,7 +36,12 @@ void APlayerPawn::BeginPlay()
 		}
 	}
 
-	BallemPathManager = Cast<ABallemGameMode>(UGameplayStatics::GetGameMode(this))->GetBallemPathManager();
+	BallemGameMode = Cast<ABallemGameMode>(UGameplayStatics::GetGameMode(this));
+
+	if (BallemGameMode)
+	{
+		BallemPathManager = BallemGameMode->GetBallemPathManager();
+	}
 
 	FTimerHandle StartTimer;
 	FTimerDelegate StartTimerDelegate = FTimerDelegate::CreateUObject(this, &APlayerPawn::FindBalls);
@@ -77,9 +82,11 @@ void APlayerPawn::StartBuild()
 
 		if (!(HitResult.GetActor()->ActorHasTag(TEXT("SplinePath"))))
 		{
-			DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 50, 12, FColor::Red, false, 1000.f);
+			//DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 50, 12, FColor::Red, false, 1000.f);
+			AddBuildPoint(HitResult.ImpactPoint);
 
 			BuildInProgress = true;
+			BallemGameMode->AddBuildControls();
 
 			NewSpline = NewObject<USplineComponent>(this, USplineComponent::StaticClass());
 			NewSpline->ClearSplinePoints();
@@ -103,7 +110,8 @@ void APlayerPawn::ContinueBuild()
 		FSplinePoint LastPoint =  NewSpline->GetSplinePointAt(NewSpline->GetNumberOfSplinePoints() - 1, ESplineCoordinateSpace::World);
 		if ((HitResult.ImpactPoint - LastPoint.Position).Length() > MinSplinePointDistance && !(HitResult.GetActor()->ActorHasTag(TEXT("SplinePath"))))
 		{
-			DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 50, 12, FColor::Red, false, 1000.f);
+			//DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 50, 12, FColor::Red, false, 1000.f);
+			AddBuildPoint(HitResult.ImpactPoint);
 			NewSpline->AddSplinePoint(HitResult.ImpactPoint, ESplineCoordinateSpace::World, true);
 
 			UE_LOG(LogTemp, Display, TEXT("Build func continued"));
@@ -115,11 +123,27 @@ void APlayerPawn::EndBuild(const FInputActionValue& Value)
 {
 	UE_LOG(LogTemp, Display, TEXT("Build func ended"));
 
-	FlushPersistentDebugLines(GetWorld());
+	//FlushPersistentDebugLines(GetWorld());
+	ClearBuildPoints();
 
 	BallemPathManager->AddNewPath(NewSpline);
 
 	BuildInProgress = false;
+	BallemGameMode->RemoveBuildControls();
+}
+
+void APlayerPawn::CancelBuild()
+{
+	if (BuildInProgress)
+	{
+		//FlushPersistentDebugLines(GetWorld());
+		ClearBuildPoints();
+
+		NewSpline->DestroyComponent();
+
+		BuildInProgress = false;
+		BallemGameMode->RemoveBuildControls();
+	}
 }
 
 void APlayerPawn::StartSimulation(const FInputActionValue& Value)
@@ -164,6 +188,36 @@ void APlayerPawn::MoveCursor(const FInputActionValue& Value)
 	}
 }
 
+void APlayerPawn::UpdatePathHoverContext(bool AddContext)
+{
+	if (BallemPlayerController && PathHoverContext)
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem< UEnhancedInputLocalPlayerSubsystem>(BallemPlayerController->GetLocalPlayer()))
+		{
+			//Add path hover context with higher priority to override original context
+			if (AddContext)
+			{
+				Subsystem->AddMappingContext(PathHoverContext, 1);
+				UE_LOG(LogTemp, Display, TEXT("Hover context added"));
+			}
+			//remove context
+			else
+			{
+				Subsystem->RemoveMappingContext(PathHoverContext);
+				UE_LOG(LogTemp, Display, TEXT("Hover context removed"));
+			}
+		}		
+	}
+}
+
+void APlayerPawn::DeletePath()
+{
+	if (HoveredPath && BallemPathManager)
+	{
+		BallemPathManager->RemovePath(HoveredPath);
+	}
+}
+
 void APlayerPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
@@ -172,17 +226,89 @@ void APlayerPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	{
 		EnhancedInputComponent->BindAction(BuildAction, ETriggerEvent::Triggered, this, &APlayerPawn::Build);
 		EnhancedInputComponent->BindAction(EndBuildAction, ETriggerEvent::Triggered, this, &APlayerPawn::EndBuild);
+		EnhancedInputComponent->BindAction(CancelBuildAction, ETriggerEvent::Triggered, this, &APlayerPawn::CancelBuild);
 		EnhancedInputComponent->BindAction(StartSimulateAction, ETriggerEvent::Triggered, this, &APlayerPawn::StartSimulation);
 		EnhancedInputComponent->BindAction(UndoAction, ETriggerEvent::Triggered, this, &APlayerPawn::UndoPath);
 		EnhancedInputComponent->BindAction(ResetAction, ETriggerEvent::Triggered, this, &APlayerPawn::Reset);
 		EnhancedInputComponent->BindAction(MoveCursorAction, ETriggerEvent::Triggered, this, &APlayerPawn::MoveCursor);
+		EnhancedInputComponent->BindAction(DeletePathAction, ETriggerEvent::Triggered, this, &APlayerPawn::DeletePath);
 	}
+}
+
+void APlayerPawn::AddBuildPoint(FVector PointLocation)
+{
+	if (BuildPointClass)
+	{
+		auto NewBuildPoint = GetWorld()->SpawnActor<AActor>(BuildPointClass, PointLocation, FRotator::ZeroRotator);
+
+		if (NewBuildPoint)
+		{
+			BuildPointArray.Add(NewBuildPoint);
+		}
+	}
+}
+
+void APlayerPawn::ClearBuildPoints()
+{
+	for (AActor* BuildPoint : BuildPointArray)
+	{
+		BuildPoint->Destroy();
+	}
+	BuildPointArray.Empty();
+}
+
+void APlayerPawn::CheckForHoveredPath()
+{
+	//Don't check for hover if we're currently building
+	if (!BuildInProgress)
+	{
+		if (!HoveringPath && BallemPlayerController)
+		{
+			FHitResult HitResult;
+			BallemPlayerController->GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, false, HitResult);
+
+			//If cursor is over a spline path
+			if (HitResult.GetActor() && HitResult.GetActor()->ActorHasTag(TEXT("SplinePath")))
+			{
+				UpdatePathHoverContext(true);
+
+				HoveredPath = Cast<APath>(HitResult.GetActor());
+
+				//Toggle highlight on path
+				HoveredPath->ToggleHighlight();
+
+				HoveringPath = true;
+				BallemGameMode->AddHoverControls();
+			}
+		}
+		else if (HoveringPath)
+		{
+			FHitResult HitResult;
+			BallemPlayerController->GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, false, HitResult);
+
+			if (HitResult.GetActor() != HoveredPath)
+			{
+				UpdatePathHoverContext(false);
+
+				///Toggle highlight on path
+				HoveredPath->ToggleHighlight();
+				//Clear hovered path
+				HoveredPath = nullptr;
+
+				HoveringPath = false;
+				BallemGameMode->RemoveHoverControls();
+			}
+		}
+	}
+
 }
 
 
 void APlayerPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	CheckForHoveredPath();
 }
 
 

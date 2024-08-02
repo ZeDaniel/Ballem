@@ -19,6 +19,21 @@ public:
 
 	void UpdateGoals(int AddValue);
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void AddBasicControls();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void AddBuildControls();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void RemoveBuildControls();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void AddHoverControls();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void RemoveHoverControls();
+
 protected:
 	virtual void BeginPlay() override;
 
